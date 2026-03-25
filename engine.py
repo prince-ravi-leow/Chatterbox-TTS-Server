@@ -7,12 +7,8 @@ import random
 import numpy as np
 import torch
 from typing import Optional, Tuple
-from pathlib import Path
 
 from chatterbox.tts import ChatterboxTTS  # Main TTS engine class
-from chatterbox.models.s3gen.const import (
-    S3GEN_SR,
-)  # Default sample rate from the engine
 
 # Defensive Turbo import - Turbo may not be available in older package versions
 try:
@@ -46,10 +42,14 @@ else:
 
 # Log Multilingual availability status at module load time
 if MULTILINGUAL_AVAILABLE:
-    logger.info("ChatterboxMultilingualTTS is available in the installed chatterbox package.")
+    logger.info(
+        "ChatterboxMultilingualTTS is available in the installed chatterbox package."
+    )
     logger.info(f"Supported languages: {list(SUPPORTED_LANGUAGES.keys())}")
 else:
-    logger.info("ChatterboxMultilingualTTS not available in installed chatterbox package.")
+    logger.info(
+        "ChatterboxMultilingualTTS not available in installed chatterbox package."
+    )
 
 # Model selector whitelist - maps config values to model types
 MODEL_SELECTOR_MAP = {
@@ -227,7 +227,9 @@ def get_model_info() -> dict:
         "multilingual_available_in_package": MULTILINGUAL_AVAILABLE,
         "supports_multilingual": loaded_model_type == "multilingual",
         "supported_languages": (
-            SUPPORTED_LANGUAGES if loaded_model_type == "multilingual" else {"en": "English"}
+            SUPPORTED_LANGUAGES
+            if loaded_model_type == "multilingual"
+            else {"en": "English"}
         ),
     }
 
@@ -423,6 +425,19 @@ def synthesize(
             f"language={language}"
         )
 
+        # On Apple MPS, Turbo's prompt loudness normalization can upcast numpy audio
+        # arrays to float64, which later fails when moved to MPS. Disable it only
+        # for this path to keep prompt tensors float32-compatible.
+        mps_safe_norm_loudness = not (
+            loaded_model_type == "turbo"
+            and model_device == "mps"
+            and audio_prompt_path is not None
+        )
+        if not mps_safe_norm_loudness:
+            logger.debug(
+                "Disabling prompt loudness normalization for Turbo on MPS to avoid float64 tensor conversion errors."
+            )
+
         # Call the core model's generate method
         # Multilingual model requires language_id parameter
         if loaded_model_type == "multilingual":
@@ -435,13 +450,17 @@ def synthesize(
                 cfg_weight=cfg_weight,
             )
         else:
-            wav_tensor = chatterbox_model.generate(
-                text=text,
-                audio_prompt_path=audio_prompt_path,
-                temperature=temperature,
-                exaggeration=exaggeration,
-                cfg_weight=cfg_weight,
-            )
+            generate_kwargs = {
+                "text": text,
+                "audio_prompt_path": audio_prompt_path,
+                "temperature": temperature,
+                "exaggeration": exaggeration,
+                "cfg_weight": cfg_weight,
+            }
+            if loaded_model_type == "turbo":
+                generate_kwargs["norm_loudness"] = mps_safe_norm_loudness
+
+            wav_tensor = chatterbox_model.generate(**generate_kwargs)
 
         # The ChatterboxTTS.generate method already returns a CPU tensor.
         return wav_tensor, chatterbox_model.sr
@@ -460,7 +479,12 @@ def reload_model() -> bool:
     Returns:
         bool: True if the new model loaded successfully, False otherwise.
     """
-    global chatterbox_model, MODEL_LOADED, model_device, loaded_model_type, loaded_model_class_name
+    global \
+        chatterbox_model, \
+        MODEL_LOADED, \
+        model_device, \
+        loaded_model_type, \
+        loaded_model_class_name
 
     logger.info("Initiating model hot-swap/reload sequence...")
 

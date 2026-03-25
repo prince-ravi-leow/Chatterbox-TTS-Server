@@ -28,6 +28,7 @@ numpy>=1.24.0,<1.26.0           # Fundamental numerical computing
 librosa                         # Advanced audio/music analysis
 safetensors                     # Safe tensor serialization format
 descript-audio-codec            # Audio codec for ML applications
+protobuf>=4.25.3,<6             # Required by onnx/s3tokenizer on Python 3.13
 
 # --- Audio I/O & Processing ---
 soundfile                       # Audio file I/O (requires libsndfile system library)

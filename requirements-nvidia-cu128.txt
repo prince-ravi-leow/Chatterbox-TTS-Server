@@ -43,6 +43,7 @@ soundfile
 librosa
 safetensors
 descript-audio-codec
+protobuf>=4.25.3,<6
 
 # --- Configuration & Utilities ---
 PyYAML

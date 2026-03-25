@@ -16,6 +16,7 @@ soundfile # Requires libsndfile system library (e.g., sudo apt-get install libsn
 huggingface_hub
 descript-audio-codec
 safetensors
+protobuf>=4.25.3,<6
 
 # Configuration & Utilities
 pydantic
