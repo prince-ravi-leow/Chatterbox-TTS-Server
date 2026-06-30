@@ -588,6 +588,12 @@ For users with Apple Silicon Macs (M1, M2, M3, M4, etc.).
 
 **Prerequisite:** Ensure you have macOS 12.3 or later for MPS support.
 
+**Step 0: Create and activate a Python 3.10 virtual environment**
+```bash
+uv venv --python 3.10
+source .venv/bin/activate
+```
+
 **Step 1: Install PyTorch with MPS support first**
 ```bash
 # Make sure your (venv) is active
@@ -604,20 +610,25 @@ tts_engine:
 
 **Step 3: Install remaining dependencies**
 ```bash
+# If your .venv was created with uv and does not include pip, replace
+# each "pip install ..." command below with:
+# uv pip install --python .venv/bin/python ...
+
 # Install chatterbox-tts without its dependencies to avoid conflicts
 pip install --no-deps git+https://github.com/devnen/chatterbox-v2.git@master
 
 # Install core server dependencies
-pip install fastapi 'uvicorn[standard]' librosa safetensors soundfile pydub audiotsm praat-parselmouth python-multipart requests aiofiles PyYAML watchdog unidecode inflect tqdm
+pip install fastapi 'uvicorn[standard]' librosa safetensors soundfile pydub audiotsm praat-parselmouth python-multipart requests Jinja2 aiofiles PyYAML watchdog unidecode inflect tqdm hf_transfer
 
 # Install missing chatterbox dependencies
-pip install conformer==0.3.2 diffusers==0.29.0 resemble-perth==1.0.1 transformers==4.46.3
+pip install conformer==0.3.2 diffusers==0.29.0 resemble-perth==1.0.1 transformers==4.46.3 'protobuf>=4.25.3,<6' 'omegaconf>=2.3.0'
 
 # Install s3tokenizer without its problematic dependencies
 pip install --no-deps s3tokenizer
 
 # Install a compatible version of ONNX and audio codec
-pip install onnx==1.16.0 descript-audio-codec
+pip install onnx==1.16.0
+pip install descript-audio-codec
 ```
 
 **After installation, verify that PyTorch can see your GPU:**
@@ -630,7 +641,6 @@ If `MPS available:` shows `True`, your setup is correct!
 <summary><strong>💡 Why This Process Is Different</strong></summary>
 Apple Silicon requires a specific installation sequence due to dependency conflicts between the pinned PyTorch versions in chatterbox-tts and the latest PyTorch versions that support MPS. By installing PyTorch first with MPS support, then carefully installing dependencies while avoiding version conflicts, we ensure MPS acceleration works properly. The server's automatic device detection will use MPS when configured and available.
 </details>
-```
 
 ---
 
