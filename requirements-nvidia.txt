@@ -26,6 +26,7 @@ librosa
 safetensors
 descript-audio-codec
 protobuf>=4.25.3,<6
+omegaconf>=2.3.0
 
 # Configuration & Utilities
 PyYAML

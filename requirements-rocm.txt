@@ -17,6 +17,7 @@ huggingface_hub
 descript-audio-codec
 safetensors
 protobuf>=4.25.3,<6
+omegaconf>=2.3.0
 
 # Configuration & Utilities
 pydantic

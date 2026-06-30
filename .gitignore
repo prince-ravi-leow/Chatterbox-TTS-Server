@@ -33,6 +33,7 @@ env/
 .env
 
 # Ignore generated output and user data directories
+config.yaml
 outputs/
 reference_audio/
 voices/
